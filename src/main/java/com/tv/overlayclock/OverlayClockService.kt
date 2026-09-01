@@ -24,20 +24,20 @@ class OverlayClockService : Service() {
 
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-        // Styling: Translucent dark badge
         val badgeBackground = GradientDrawable().apply {
-            setColor(Color.parseColor("#80000000")) // 50% opacity black
+            setColor(Color.parseColor("#80000000")) // 50% opacity translucent black
             cornerRadius = 16f
         }
 
         clockView = TextClock(this).apply {
             format12Hour = "hh:mm a"
             format24Hour = "HH:mm"
-            setTextColor(Color.WHITE)
             textSize = 15f
             background = badgeBackground
             setPadding(20, 8, 20, 8)
         }
+
+        applySavedColor()
 
         val layoutParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -49,11 +49,22 @@ class OverlayClockService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.END
-            x = 48 // margin right (pixels)
-            y = 36 // margin top (pixels)
+            x = 48
+            y = 36
         }
 
         windowManager?.addView(clockView, layoutParams)
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        applySavedColor()
+        return START_STICKY
+    }
+
+    private fun applySavedColor() {
+        val prefs = getSharedPreferences("TVClockPrefs", Context.MODE_PRIVATE)
+        val chosenHex = prefs.getString("clock_color", "#FFFFFF") ?: "#FFFFFF"
+        clockView?.setTextColor(Color.parseColor(chosenHex))
     }
 
     private fun startNotification() {
